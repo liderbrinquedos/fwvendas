@@ -1,18 +1,18 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: fv-postgres
     environment:
-      POSTGRES_DB: erp_vendas
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-erp_vendas}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or Coolify}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - fv-network
 
@@ -20,18 +20,17 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: fv-backend
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/erp_vendas
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-erp_vendas}
       - ACTIVE_ERP=${ACTIVE_ERP:-veloflow}
       - VELOFLOW_API_URL=${VELOFLOW_API_URL:-}
       - VELOFLOW_API_TOKEN=${VELOFLOW_API_TOKEN:-}
       - VELOFLOW_TIMEOUT=${VELOFLOW_TIMEOUT:-30}
       - VELOFLOW_RETRY_ATTEMPTS=${VELOFLOW_RETRY_ATTEMPTS:-3}
       - VELOFLOW_VERIFY_SSL=${VELOFLOW_VERIFY_SSL:-False}
-      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET:-forcevendas-pro-secret-key-change-in-production}
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env or Coolify}
       - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-30}
       - SYNC_FULL_HOUR=${SYNC_FULL_HOUR:-3}
     depends_on:
@@ -43,6 +42,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
     networks:
       - fv-network
     labels:
@@ -52,12 +52,12 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: fv-frontend
-    ports:
-      - "${PORT:-3005}:80"
+    expose:
+      - "80"
     depends_on:
       backend:
         condition: service_healthy
+    restart: unless-stopped
     networks:
       - fv-network
     labels:
