@@ -1,0 +1,13 @@
+.env
+node_modules/
+__pycache__/
+*.pyc
+dist/
+.vercel/
+.idea/
+.vscode/
+.DS_Store
+postgres-data/
+.vite/
+*:Zone.Identifier
+package-lock.json
