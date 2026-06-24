@@ -1,0 +1,7 @@
+.git
+backend
+.env
+.env.example
+docker-compose*.yml
+*.md
+.opencode
